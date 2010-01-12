@@ -14,6 +14,8 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
+import com.sun.opengl.util.BufferUtil;
+
 public class ShaderTest {
 
     private static int points = 1000;
@@ -25,33 +27,28 @@ public class ShaderTest {
     private static FloatBuffer colors = createColors();
 
     private static FloatBuffer createVertices() {
-        FloatBuffer buf = ByteBuffer.allocateDirect(points*lines*3*4*4).asFloatBuffer();
+        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*2*4*4);
         for (int line = 0; line < lines; line++) {
             for (int point = 0; point < points; point++) {
                 buf.put(point / 100.0f);
                 buf.put(line / 100.0f);
-                buf.put(0.0f);
                 buf.put((point + 1) / 100.0f);
                 buf.put(line / 100.0f);
-                buf.put(0.0f);
                 buf.put((point + 1) / 100.0f);
                 buf.put((line + 1) / 100.0f);
-                buf.put(0.0f);
                 buf.put(point / 100.0f);
                 buf.put((line + 1) / 100.0f);
-                buf.put(0.0f);
             }
         }
         return buf;
     }
     
     private static FloatBuffer createColors() {
-        FloatBuffer buf = ByteBuffer.allocateDirect(points*lines*3*4*4).asFloatBuffer();
-        vertices.flip();
+        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*3*4*4);
+        vertices.rewind();
         for (int i = 0; i < lines * points * 4; i++) {
             float x = vertices.get();
             float y = vertices.get();
-            float z = vertices.get();
             buf.put(0.5f + (float) Math.cos(x) / 2);
             buf.put(0.5f + (float) Math.sin(y) / 2);
             buf.put(0.5f);
@@ -60,8 +57,6 @@ public class ShaderTest {
     }
 
     public static void main(String[] args) {
-        vertices.flip();
-        colors.flip();
         final long t0 = System.currentTimeMillis();
         final AtomicLong frameCount = new AtomicLong();
         Frame frame = new Frame();
@@ -127,20 +122,35 @@ public class ShaderTest {
             gl2.glLoadIdentity();
             gl2.glFrustum(-0.5f * zoomFactor, 0.5f * zoomFactor, -0.5f * zoomFactor / 2, 0.5f * zoomFactor / 2, 1.0f,
                     10.0f);
+            
             gl2.glMatrixMode(GL2.GL_MODELVIEW);
-
             gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
             gl2.glLoadIdentity();
-            gl2.glTranslatef(0.0f, -0.0f, -4.0f);
+
+            gl2.glTranslatef(-1.5f, -0.0f, -6.0f);
+            gl2.glBegin(GL.GL_TRIANGLES);
+            gl2.glColor3f(1.0f, 1.0f, 1.0f);
+            gl2.glVertex3f(0.0f, 1.0f, 0.0f);
+            gl2.glVertex3f(-1.0f, -1.0f, 0.0f);
+            gl2.glVertex3f(1.0f, -1.0f, 0.0f);
+            gl2.glEnd();
+
+            gl2.glTranslatef(1.5f, 0.0f, 0.0f);
+
+            vertices.rewind();
+            colors.rewind();
+            
             gl2.glEnableClientState(GL2.GL_VERTEX_ARRAY);
             gl2.glEnableClientState(GL2.GL_COLOR_ARRAY);
 
-            gl2.glVertexPointer(3, GL.GL_FLOAT, 0, vertices);
+            gl2.glVertexPointer(2, GL.GL_FLOAT, 0, vertices);
             gl2.glColorPointer(3, GL.GL_FLOAT, 0, colors);
             gl2.glDrawArrays(GL2.GL_QUADS, 0, lines*points*4);
 
             gl2.glDisableClientState(GL2.GL_VERTEX_ARRAY);
             gl2.glDisableClientState(GL2.GL_COLOR_ARRAY);
+            
+            
             gl2.glFlush();
         }
 

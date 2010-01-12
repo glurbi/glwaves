@@ -19,51 +19,60 @@ public class ShaderTest {
     private static int points = 1000;
     private static int lines = 100;
 
-    private static class Vertice {
-    	public Vertice(float x, float y, float red, float green, float blue) {
-    		this.x = x; this.y = y; this.red = red; this.green = green; this.blue = blue;
-    	}
-    	public final float x;
-    	public final float y;
-    	public final float red;
-    	public final float green;
-    	public final float blue;
+    private static class Vertex {
+        public Vertex(float x, float y, float red, float green, float blue) {
+            this.x = x;
+            this.y = y;
+            this.red = red;
+            this.green = green;
+            this.blue = blue;
+        }
+
+        public final float x;
+        public final float y;
+        public final float red;
+        public final float green;
+        public final float blue;
     }
-    
-    private static class Triangle {
-    	public Triangle(Vertice v1, Vertice v2, Vertice v3) {
-    		this.v1 = v1; this.v2 = v2; this.v3 = v3;
-    	}
-    	public final Vertice v1;
-    	public final Vertice v2;
-    	public final Vertice v3;
+
+    private static class Rectangle {
+        public Rectangle(Vertex v1, Vertex v2, Vertex v3, Vertex v4) {
+            this.v1 = v1;
+            this.v2 = v2;
+            this.v3 = v3;
+            this.v4 = v4;
+        }
+
+        public final Vertex v1;
+        public final Vertex v2;
+        public final Vertex v3;
+        public final Vertex v4;
     }
-    
-    private static List<Triangle> triangles = createTriangles();
-    
-    private static List<Triangle> createTriangles() {
-    	ArrayList<Triangle> result = new ArrayList<Triangle>();
+
+    private static List<Rectangle> rectangles = createRectangles();
+
+    private static List<Rectangle> createRectangles() {
+        ArrayList<Rectangle> result = new ArrayList<Rectangle>();
         for (int line = 1; line < lines; line++) {
             for (int point = 1; point < points; point++) {
-            	float x1 = point / 100.0f;
-            	float x2 = (point+1) / 100.0f;
-            	float x3 = point / 100.0f;
-            	float x4 = (point+1) / 100.0f;
-            	float y1 = line / 100.0f;
-            	float y2 = line / 100.0f;
-            	float y3 = (line+1) / 100.0f;
-            	float y4 = (line+1) / 100.0f;
-            	Vertice v1 = new Vertice(x1, y1, 0.5f + (float) Math.cos(x1) / 2, 0.5f + (float) Math.sin(y1) / 2, 0.5f);
-            	Vertice v2 = new Vertice(x2, y2, 0.5f + (float) Math.cos(x2) / 2, 0.5f + (float) Math.sin(y2) / 2, 0.5f);
-            	Vertice v3 = new Vertice(x3, y3, 0.5f + (float) Math.cos(x3) / 2, 0.5f + (float) Math.sin(y3) / 2, 0.5f);
-            	Vertice v4 = new Vertice(x4, y4, 0.5f + (float) Math.cos(x4) / 2, 0.5f + (float) Math.sin(y4) / 2, 0.5f);
-            	result.add(new Triangle(v1, v2, v3));
-            	result.add(new Triangle(v2, v3, v4));
+                float x1 = point / 100.0f;
+                float y1 = line / 100.0f;
+                float x2 = (point + 1) / 100.0f;
+                float y2 = line / 100.0f;
+                float x3 = (point + 1) / 100.0f;
+                float y3 = (line + 1) / 100.0f;
+                float x4 = point / 100.0f;
+                float y4 = (line + 1) / 100.0f;
+                Vertex v1 = new Vertex(x1, y1, 0.5f + (float) Math.cos(x1) / 2, 0.5f + (float) Math.sin(y1) / 2, 0.5f);
+                Vertex v2 = new Vertex(x2, y2, 0.5f + (float) Math.cos(x2) / 2, 0.5f + (float) Math.sin(y2) / 2, 0.5f);
+                Vertex v3 = new Vertex(x3, y3, 0.5f + (float) Math.cos(x3) / 2, 0.5f + (float) Math.sin(y3) / 2, 0.5f);
+                Vertex v4 = new Vertex(x4, y4, 0.5f + (float) Math.cos(x4) / 2, 0.5f + (float) Math.sin(y4) / 2, 0.5f);
+                result.add(new Rectangle(v1, v2, v3, v4));
             }
         }
-    	return result;
+        return result;
     }
-    
+
     private volatile static float zoomFactor = 1.0f;
 
     public static void main(String[] args) {
@@ -91,6 +100,7 @@ public class ShaderTest {
                 }
                 System.out.println("zoomFactor=" + zoomFactor);
             }
+
             public void mouseDragged(MouseEvent e) {
             }
         };
@@ -136,15 +146,17 @@ public class ShaderTest {
             gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
             gl2.glLoadIdentity();
             gl2.glTranslatef(0.0f, -0.0f, -4.0f);
-            gl2.glBegin(GL.GL_TRIANGLES);
+            gl2.glBegin(GL2.GL_QUADS);
 
-            for (Triangle triangle : triangles) {
-            	gl2.glVertex3f(triangle.v1.x, triangle.v1.y, 0.0f);
-            	gl2.glColor3f(triangle.v1.red, triangle.v1.green, triangle.v1.blue);
-            	gl2.glVertex3f(triangle.v2.x, triangle.v2.y, 0.0f);
-            	gl2.glColor3f(triangle.v2.red, triangle.v2.green, triangle.v1.blue);
-            	gl2.glVertex3f(triangle.v3.x, triangle.v3.y, 0.0f);
-            	gl2.glColor3f(triangle.v3.red, triangle.v3.green, triangle.v1.blue);
+            for (Rectangle rectangle : rectangles) {
+                gl2.glVertex2f(rectangle.v1.x, rectangle.v1.y);
+                gl2.glColor3f(rectangle.v1.red, rectangle.v1.green, rectangle.v1.blue);
+                gl2.glVertex2f(rectangle.v2.x, rectangle.v2.y);
+                gl2.glColor3f(rectangle.v2.red, rectangle.v2.green, rectangle.v2.blue);
+                gl2.glVertex2f(rectangle.v3.x, rectangle.v3.y);
+                gl2.glColor3f(rectangle.v3.red, rectangle.v3.green, rectangle.v3.blue);
+                gl2.glVertex2f(rectangle.v4.x, rectangle.v4.y);
+                gl2.glColor3f(rectangle.v4.red, rectangle.v4.green, rectangle.v4.blue);
             }
 
             gl2.glEnd();

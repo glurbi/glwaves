@@ -4,8 +4,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.media.opengl.GL;
@@ -19,63 +19,49 @@ public class ShaderTest {
     private static int points = 1000;
     private static int lines = 100;
 
-    private static class Vertex {
-        public Vertex(float x, float y, float red, float green, float blue) {
-            this.x = x;
-            this.y = y;
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
-        }
+    private volatile static float zoomFactor = 1.0f;
+    
+    private static FloatBuffer vertices = createVertices();
+    private static FloatBuffer colors = createColors();
 
-        public final float x;
-        public final float y;
-        public final float red;
-        public final float green;
-        public final float blue;
-    }
-
-    private static class Rectangle {
-        public Rectangle(Vertex v1, Vertex v2, Vertex v3, Vertex v4) {
-            this.v1 = v1;
-            this.v2 = v2;
-            this.v3 = v3;
-            this.v4 = v4;
-        }
-
-        public final Vertex v1;
-        public final Vertex v2;
-        public final Vertex v3;
-        public final Vertex v4;
-    }
-
-    private static List<Rectangle> rectangles = createRectangles();
-
-    private static List<Rectangle> createRectangles() {
-        ArrayList<Rectangle> result = new ArrayList<Rectangle>();
-        for (int line = 1; line < lines; line++) {
-            for (int point = 1; point < points; point++) {
-                float x1 = point / 100.0f;
-                float y1 = line / 100.0f;
-                float x2 = (point + 1) / 100.0f;
-                float y2 = line / 100.0f;
-                float x3 = (point + 1) / 100.0f;
-                float y3 = (line + 1) / 100.0f;
-                float x4 = point / 100.0f;
-                float y4 = (line + 1) / 100.0f;
-                Vertex v1 = new Vertex(x1, y1, 0.5f + (float) Math.cos(x1) / 2, 0.5f + (float) Math.sin(y1) / 2, 0.5f);
-                Vertex v2 = new Vertex(x2, y2, 0.5f + (float) Math.cos(x2) / 2, 0.5f + (float) Math.sin(y2) / 2, 0.5f);
-                Vertex v3 = new Vertex(x3, y3, 0.5f + (float) Math.cos(x3) / 2, 0.5f + (float) Math.sin(y3) / 2, 0.5f);
-                Vertex v4 = new Vertex(x4, y4, 0.5f + (float) Math.cos(x4) / 2, 0.5f + (float) Math.sin(y4) / 2, 0.5f);
-                result.add(new Rectangle(v1, v2, v3, v4));
+    private static FloatBuffer createVertices() {
+        FloatBuffer buf = ByteBuffer.allocateDirect(points*lines*3*4*4).asFloatBuffer();
+        for (int line = 0; line < lines; line++) {
+            for (int point = 0; point < points; point++) {
+                buf.put(point / 100.0f);
+                buf.put(line / 100.0f);
+                buf.put(0.0f);
+                buf.put((point + 1) / 100.0f);
+                buf.put(line / 100.0f);
+                buf.put(0.0f);
+                buf.put((point + 1) / 100.0f);
+                buf.put((line + 1) / 100.0f);
+                buf.put(0.0f);
+                buf.put(point / 100.0f);
+                buf.put((line + 1) / 100.0f);
+                buf.put(0.0f);
             }
         }
-        return result;
+        return buf;
+    }
+    
+    private static FloatBuffer createColors() {
+        FloatBuffer buf = ByteBuffer.allocateDirect(points*lines*3*4*4).asFloatBuffer();
+        vertices.flip();
+        for (int i = 0; i < lines * points * 4; i++) {
+            float x = vertices.get();
+            float y = vertices.get();
+            float z = vertices.get();
+            buf.put(0.5f + (float) Math.cos(x) / 2);
+            buf.put(0.5f + (float) Math.sin(y) / 2);
+            buf.put(0.5f);
+        }
+        return buf;
     }
 
-    private volatile static float zoomFactor = 1.0f;
-
     public static void main(String[] args) {
+        vertices.flip();
+        colors.flip();
         final long t0 = System.currentTimeMillis();
         final AtomicLong frameCount = new AtomicLong();
         Frame frame = new Frame();
@@ -146,20 +132,15 @@ public class ShaderTest {
             gl2.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
             gl2.glLoadIdentity();
             gl2.glTranslatef(0.0f, -0.0f, -4.0f);
-            gl2.glBegin(GL2.GL_QUADS);
+            gl2.glEnableClientState(GL2.GL_VERTEX_ARRAY);
+            gl2.glEnableClientState(GL2.GL_COLOR_ARRAY);
 
-            for (Rectangle rectangle : rectangles) {
-                gl2.glVertex2f(rectangle.v1.x, rectangle.v1.y);
-                gl2.glColor3f(rectangle.v1.red, rectangle.v1.green, rectangle.v1.blue);
-                gl2.glVertex2f(rectangle.v2.x, rectangle.v2.y);
-                gl2.glColor3f(rectangle.v2.red, rectangle.v2.green, rectangle.v2.blue);
-                gl2.glVertex2f(rectangle.v3.x, rectangle.v3.y);
-                gl2.glColor3f(rectangle.v3.red, rectangle.v3.green, rectangle.v3.blue);
-                gl2.glVertex2f(rectangle.v4.x, rectangle.v4.y);
-                gl2.glColor3f(rectangle.v4.red, rectangle.v4.green, rectangle.v4.blue);
-            }
+            gl2.glVertexPointer(3, GL.GL_FLOAT, 0, vertices);
+            gl2.glColorPointer(3, GL.GL_FLOAT, 0, colors);
+            gl2.glDrawArrays(GL2.GL_QUADS, 0, lines*points*4);
 
-            gl2.glEnd();
+            gl2.glDisableClientState(GL2.GL_VERTEX_ARRAY);
+            gl2.glDisableClientState(GL2.GL_COLOR_ARRAY);
             gl2.glFlush();
         }
 

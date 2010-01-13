@@ -5,7 +5,9 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.FloatBuffer;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
@@ -20,6 +22,8 @@ public class ShaderTest {
     private static final int points = 500;
     private static final int lines = 200;
     private static final float mouseAccel = 0.01f;
+    private static final int steps = 50;
+    private static final float phaseInc = (float) -(2 * Math.PI / steps);
 
     private static float scale = 1.0f;
     private static float xTranslate = 0.0f;
@@ -29,13 +33,23 @@ public class ShaderTest {
     
     private static float xSource = 3.5f;
     private static float ySource = 0.5f;
-    
-    private static float phase = 0.0f;
+
+    private static AtomicInteger frameCount = new AtomicInteger();
     
     private static FloatBuffer vertices = createVertices();
-    private static FloatBuffer colors = createColors();
+    private static List<FloatBuffer> colorsList = createColorsList();
+    private static FloatBuffer colors = colorsList.get(0);
 
-    private static AtomicLong frameCount = new AtomicLong();
+    private static List<FloatBuffer> createColorsList() {
+        System.out.println("Creating simulated data");
+        List<FloatBuffer> l = new ArrayList<FloatBuffer>();
+        for (int i = 0; i < steps; i++) {
+            l.add(createColors(phaseInc*i));
+            System.out.print(".");
+        }
+        System.out.println();
+        return l;
+    }
     
     private static FloatBuffer createVertices() {
         // 2 components (x, y) per vertex, 4 vertices per quad
@@ -55,7 +69,7 @@ public class ShaderTest {
         return buf;
     }
     
-    private static FloatBuffer createColors() {
+    private static FloatBuffer createColors(float phase) {
         // 3 components (red, green, blue) per color, 4 colors per quad
         FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*3*4);
         vertices.rewind();
@@ -194,8 +208,7 @@ public class ShaderTest {
                 while (true) {
                     canvas.display();
                     frameCount.incrementAndGet();
-                    phase += Math.PI / 20;
-                    colors = createColors();
+                    colors = colorsList.get(frameCount.get() % steps);
                     Thread.yield();
                 }
             }

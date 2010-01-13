@@ -17,15 +17,20 @@ import com.sun.opengl.util.BufferUtil;
 
 public class ShaderTest {
 
-    private static final int points = 1000;
-    private static final int lines = 100;
+    private static final int points = 500;
+    private static final int lines = 200;
     private static final float mouseAccel = 0.01f;
 
-    private volatile static float scale = 1.0f;
-    private volatile static float xTranslate = 0.0f;
-    private volatile static float yTranslate = 0.0f;
-    private volatile static float xRotate = 0.0f;
-    private volatile static float yRotate = 0.0f;
+    private static float scale = 1.0f;
+    private static float xTranslate = 0.0f;
+    private static float yTranslate = 0.0f;
+    private static float xRotate = 0.0f;
+    private static float yRotate = 0.0f;
+    
+    private static float xSource = 3.5f;
+    private static float ySource = 0.5f;
+    
+    private static float phase = 0.0f;
     
     private static FloatBuffer vertices = createVertices();
     private static FloatBuffer colors = createColors();
@@ -33,7 +38,8 @@ public class ShaderTest {
     private static AtomicLong frameCount = new AtomicLong();
     
     private static FloatBuffer createVertices() {
-        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*2*4*4);
+        // 2 components (x, y) per vertex, 4 vertices per quad
+        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*2*4);
         for (int line = 0; line < lines; line++) {
             for (int point = 0; point < points; point++) {
                 buf.put(point / 100.0f);
@@ -50,14 +56,19 @@ public class ShaderTest {
     }
     
     private static FloatBuffer createColors() {
-        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*3*4*4);
+        // 3 components (red, green, blue) per color, 4 colors per quad
+        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*3*4);
         vertices.rewind();
         for (int i = 0; i < lines * points * 4; i++) {
             float x = vertices.get();
             float y = vertices.get();
-            buf.put(0.5f + (float) Math.cos(x) / 2);
-            buf.put(0.5f + (float) Math.sin(y) / 2);
-            buf.put(0.5f);
+            float xDif = xSource - x;
+            float yDif = ySource - y;
+            float squareDist = xDif*xDif + yDif*yDif;
+            float amplitude = (float) Math.cos(squareDist + phase) / (2 * squareDist);
+            buf.put(0.5f + amplitude);
+            buf.put(0.5f - amplitude);
+            buf.put(0.5f - amplitude);
         }
         return buf;
     }
@@ -74,7 +85,6 @@ public class ShaderTest {
             } else if (rotation < 0) {
                 scale *= -rotation * 2;
             }
-            System.out.println("zoomFactor=" + scale);
         }
 
         public void mousePressed(MouseEvent e) {
@@ -120,19 +130,21 @@ public class ShaderTest {
             
             gl2.glLoadIdentity();
             gl2.glTranslatef(xTranslate, yTranslate, 0.0f);
-            gl2.glTranslatef(-1.5f, -0.0f, -5.0f);
+            gl2.glTranslatef(0.0f, 0.0f, -5.0f);
             gl2.glRotatef(xRotate, 1, 0, 0);
             gl2.glRotatef(yRotate, 0, 1, 0);
             gl2.glScalef(scale, scale, scale);
             
-            gl2.glBegin(GL.GL_TRIANGLES);
+            gl2.glLineWidth(5);
+            gl2.glBegin(GL.GL_LINES);
             gl2.glColor3f(1.0f, 1.0f, 1.0f);
+            gl2.glVertex3f(0.0f, 0.0f, 0.0f);
+            gl2.glVertex3f(1.0f, 0.0f, 0.0f);
+            gl2.glVertex3f(0.0f, 0.0f, 0.0f);
             gl2.glVertex3f(0.0f, 1.0f, 0.0f);
-            gl2.glVertex3f(-1.0f, -1.0f, 0.0f);
-            gl2.glVertex3f(1.0f, -1.0f, 0.0f);
+            gl2.glVertex3f(0.0f, 0.0f, 0.0f);
+            gl2.glVertex3f(0.0f, 0.0f, 1.0f);
             gl2.glEnd();
-
-            gl2.glTranslatef(1.5f, 0.0f, 0.0f);
 
             vertices.rewind();
             colors.rewind();
@@ -146,7 +158,6 @@ public class ShaderTest {
 
             gl2.glDisableClientState(GL2.GL_VERTEX_ARRAY);
             gl2.glDisableClientState(GL2.GL_COLOR_ARRAY);
-            
             
             gl2.glFlush();
         }
@@ -183,6 +194,8 @@ public class ShaderTest {
                 while (true) {
                     canvas.display();
                     frameCount.incrementAndGet();
+                    phase += Math.PI / 20;
+                    colors = createColors();
                     Thread.yield();
                 }
             }

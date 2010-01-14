@@ -36,55 +36,86 @@ public class ShaderTest {
 
     private static AtomicInteger frameCount = new AtomicInteger();
     
-    private static FloatBuffer vertices = createVertices();
-    private static List<FloatBuffer> colorsList = createColorsList();
-    private static FloatBuffer colors = colorsList.get(0);
+    private static List<FloatBuffer> verticesList = new ArrayList<FloatBuffer>();
+    private static List<FloatBuffer> colorsList = new ArrayList<FloatBuffer>();
 
-    private static List<FloatBuffer> createColorsList() {
+    private static FloatBuffer vertices = null;
+    private static FloatBuffer colors = null;
+    
+    private static void createDataSet() {
         System.out.println("Creating simulated data");
-        List<FloatBuffer> l = new ArrayList<FloatBuffer>();
         for (int i = 0; i < steps; i++) {
-            l.add(createColors(phaseInc*i));
+            
+            float phase = phaseInc*i;
+            float x, y, xDif, yDif, squareDist, amplitude;
+            
+            // 3 components (x, y, z) per vertex, 4 vertices per quad
+            FloatBuffer vertices = BufferUtil.newFloatBuffer(points*lines*3*4);
+            // 3 components (red, green, blue) per color, 4 colors per quad
+            FloatBuffer colors = BufferUtil.newFloatBuffer(points*lines*3*4);
+            for (int line = 0; line < lines; line++) {
+                for (int point = 0; point < points; point++) {
+
+                    x = point / 100.0f;
+                    y = line / 100.0f;
+                    xDif = xSource - x;
+                    yDif = ySource - y;
+                    squareDist = xDif*xDif + yDif*yDif;
+                    amplitude = (float) Math.cos(squareDist + phase) / (10 * squareDist + 1);
+                    vertices.put(x);
+                    vertices.put(y);
+                    vertices.put(amplitude);
+                    colors.put(0.5f + amplitude);
+                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude);
+                    
+                    x = (point + 1) / 100.0f;
+                    y = line / 100.0f;
+                    xDif = xSource - x;
+                    yDif = ySource - y;
+                    squareDist = xDif*xDif + yDif*yDif;
+                    amplitude = (float) Math.cos(squareDist + phase) / (10 * squareDist + 1);
+                    vertices.put(x);
+                    vertices.put(y);
+                    vertices.put(amplitude);
+                    colors.put(0.5f + amplitude);
+                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude);
+                    
+                    x = (point + 1) / 100.0f;
+                    y = (line + 1) / 100.0f;
+                    xDif = xSource - x;
+                    yDif = ySource - y;
+                    squareDist = xDif*xDif + yDif*yDif;
+                    amplitude = (float) Math.cos(squareDist + phase) / (10 * squareDist + 1);
+                    vertices.put(x);
+                    vertices.put(y);
+                    vertices.put(amplitude);
+                    colors.put(0.5f + amplitude);
+                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude);
+                    
+                    
+                    x = point / 100.0f;
+                    y = (line + 1) / 100.0f;
+                    xDif = xSource - x;
+                    yDif = ySource - y;
+                    squareDist = xDif*xDif + yDif*yDif;
+                    amplitude = (float) Math.cos(squareDist + phase) / (10 * squareDist + 1);
+                    vertices.put(x);
+                    vertices.put(y);
+                    vertices.put(amplitude);
+                    colors.put(0.5f + amplitude);
+                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude);
+                }
+            }
+            
+            verticesList.add(vertices);
+            colorsList.add(colors);
             System.out.print(".");
         }
         System.out.println();
-        return l;
-    }
-    
-    private static FloatBuffer createVertices() {
-        // 2 components (x, y) per vertex, 4 vertices per quad
-        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*2*4);
-        for (int line = 0; line < lines; line++) {
-            for (int point = 0; point < points; point++) {
-                buf.put(point / 100.0f);
-                buf.put(line / 100.0f);
-                buf.put((point + 1) / 100.0f);
-                buf.put(line / 100.0f);
-                buf.put((point + 1) / 100.0f);
-                buf.put((line + 1) / 100.0f);
-                buf.put(point / 100.0f);
-                buf.put((line + 1) / 100.0f);
-            }
-        }
-        return buf;
-    }
-    
-    private static FloatBuffer createColors(float phase) {
-        // 3 components (red, green, blue) per color, 4 colors per quad
-        FloatBuffer buf = BufferUtil.newFloatBuffer(points*lines*3*4);
-        vertices.rewind();
-        for (int i = 0; i < lines * points * 4; i++) {
-            float x = vertices.get();
-            float y = vertices.get();
-            float xDif = xSource - x;
-            float yDif = ySource - y;
-            float squareDist = xDif*xDif + yDif*yDif;
-            float amplitude = (float) Math.cos(squareDist + phase) / (2 * squareDist);
-            buf.put(0.5f + amplitude);
-            buf.put(0.5f - amplitude);
-            buf.put(0.5f - amplitude);
-        }
-        return buf;
     }
 
     private static class MyMouseListener extends MouseAdapter {
@@ -166,7 +197,7 @@ public class ShaderTest {
             gl2.glEnableClientState(GL2.GL_VERTEX_ARRAY);
             gl2.glEnableClientState(GL2.GL_COLOR_ARRAY);
 
-            gl2.glVertexPointer(2, GL.GL_FLOAT, 0, vertices);
+            gl2.glVertexPointer(3, GL.GL_FLOAT, 0, vertices);
             gl2.glColorPointer(3, GL.GL_FLOAT, 0, colors);
             gl2.glDrawArrays(GL2.GL_QUADS, 0, lines*points*4);
 
@@ -186,6 +217,7 @@ public class ShaderTest {
 
     
     public static void main(String[] args) {
+        createDataSet();
         final long t0 = System.currentTimeMillis();
         Frame frame = new Frame();
         frame.addWindowListener(new WindowAdapter() {
@@ -206,9 +238,10 @@ public class ShaderTest {
         new Thread(new Runnable() {
             public void run() {
                 while (true) {
-                    canvas.display();
                     frameCount.incrementAndGet();
+                    vertices = verticesList.get(frameCount.get() % steps);
                     colors = colorsList.get(frameCount.get() % steps);
+                    canvas.display();
                     Thread.yield();
                 }
             }

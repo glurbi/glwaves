@@ -66,7 +66,7 @@ public class ShaderTest {
                     vertices.put(y);
                     vertices.put(amplitude);
                     colors.put(0.5f + amplitude);
-                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude * 10);
                     colors.put(0.5f - amplitude);
                     
                     x = (point + 1) / 100.0f;
@@ -79,7 +79,7 @@ public class ShaderTest {
                     vertices.put(y);
                     vertices.put(amplitude);
                     colors.put(0.5f + amplitude);
-                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude * 10);
                     colors.put(0.5f - amplitude);
                     
                     x = (point + 1) / 100.0f;
@@ -92,7 +92,7 @@ public class ShaderTest {
                     vertices.put(y);
                     vertices.put(amplitude);
                     colors.put(0.5f + amplitude);
-                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude * 10);
                     colors.put(0.5f - amplitude);
                     
                     
@@ -106,7 +106,7 @@ public class ShaderTest {
                     vertices.put(y);
                     vertices.put(amplitude);
                     colors.put(0.5f + amplitude);
-                    colors.put(0.5f - amplitude);
+                    colors.put(0.5f - amplitude * 10);
                     colors.put(0.5f - amplitude);
                 }
             }

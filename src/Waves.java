@@ -17,6 +17,12 @@ import javax.media.opengl.awt.GLCanvas;
 
 import com.sun.opengl.util.BufferUtil;
 
+// JOGL 2.0 dependencies:
+// gluegen-rt.jar
+// jogl.all.jar
+// newt.all.jar
+// nativewindow.all.jar (+ native library dependency)
+
 public class Waves {
 
     private static final int points = 500;

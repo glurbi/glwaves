@@ -17,7 +17,7 @@ import javax.media.opengl.awt.GLCanvas;
 
 import com.sun.opengl.util.BufferUtil;
 
-public class ShaderTest {
+public class Waves {
 
     private static final int points = 500;
     private static final int lines = 200;

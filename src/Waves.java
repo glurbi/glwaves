@@ -15,7 +15,7 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
-import com.sun.opengl.util.BufferUtil;
+import com.jogamp.common.nio.Buffers;
 
 // JOGL 2.0 dependencies:
 // gluegen-rt.jar
@@ -23,6 +23,7 @@ import com.sun.opengl.util.BufferUtil;
 // newt.all.jar
 // nativewindow.all.jar (+ native library dependency)
 
+// -Xmx512m
 public class Waves {
 
     private static final int points = 500;
@@ -56,9 +57,9 @@ public class Waves {
             float x, y, xDif, yDif, squareDist, amplitude;
             
             // 3 components (x, y, z) per vertex, 4 vertices per quad
-            FloatBuffer vertices = BufferUtil.newFloatBuffer(points*lines*3*4);
+            FloatBuffer vertices = Buffers.newDirectFloatBuffer(points*lines*3*4);
             // 3 components (red, green, blue) per color, 4 colors per quad
-            FloatBuffer colors = BufferUtil.newFloatBuffer(points*lines*3*4);
+            FloatBuffer colors = Buffers.newDirectFloatBuffer(points*lines*3*4);
             for (int line = 0; line < lines; line++) {
                 for (int point = 0; point < points; point++) {
 
